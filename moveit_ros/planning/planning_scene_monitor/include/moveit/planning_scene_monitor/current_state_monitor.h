@@ -211,6 +211,7 @@ private:
   std::vector<JointStateUpdateCallback> update_callbacks_;
 
   std::shared_ptr<TFConnection> tf_connection_;
+  std::string tf_prefix_;
 };
 
 MOVEIT_CLASS_FORWARD(CurrentStateMonitor);

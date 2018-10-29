@@ -59,6 +59,10 @@ planning_scene_monitor::CurrentStateMonitor::CurrentStateMonitor(const robot_mod
   , error_(std::numeric_limits<double>::epsilon())
 {
   robot_state_.setToDefaultValues();
+
+  nh_.param<std::string>("tf_prefix", tf_prefix_, "");
+  if (!tf_prefix_.empty() && tf_prefix_.back() != '/')
+    tf_prefix_ += "/";
 }
 
 planning_scene_monitor::CurrentStateMonitor::~CurrentStateMonitor()
@@ -420,9 +424,9 @@ void planning_scene_monitor::CurrentStateMonitor::tfCallback()
     for (size_t i = 0; i < multi_dof_joints.size(); i++)
     {
       const moveit::core::JointModel* joint = multi_dof_joints[i];
-      const std::string& child_frame = joint->getChildLinkModel()->getName();
-      const std::string& parent_frame =
-          joint->getParentLinkModel() ? joint->getParentLinkModel()->getName() : robot_model_->getModelFrame();
+      const std::string& child_frame = tf_prefix_ + joint->getChildLinkModel()->getName();
+      const std::string& parent_frame = tf_prefix_ +
+          (joint->getParentLinkModel() ? joint->getParentLinkModel()->getName() : robot_model_->getModelFrame());
 
       ros::Time latest_common_time;
       geometry_msgs::TransformStamped transf;
