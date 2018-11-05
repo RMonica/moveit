@@ -150,6 +150,10 @@ planning_scene_monitor::PlanningSceneMonitor::PlanningSceneMonitor(
   spinner_.reset(new ros::AsyncSpinner(1, &queue_));
   spinner_->start();
   initialize(scene);
+
+  nh_.param<std::string>("tf_prefix", tf_prefix_, "");
+  if (!tf_prefix_.empty() && tf_prefix_.back() != '/')
+    tf_prefix_ += "/";
 }
 
 planning_scene_monitor::PlanningSceneMonitor::PlanningSceneMonitor(
@@ -160,6 +164,10 @@ planning_scene_monitor::PlanningSceneMonitor::PlanningSceneMonitor(
   // use same callback queue as root_nh_
   nh_.setCallbackQueue(root_nh_.getCallbackQueue());
   initialize(scene);
+
+  nh_.param<std::string>("tf_prefix", tf_prefix_, "");
+  if (!tf_prefix_.empty() && tf_prefix_.back() != '/')
+    tf_prefix_ += "/";
 }
 
 planning_scene_monitor::PlanningSceneMonitor::~PlanningSceneMonitor()
@@ -999,7 +1007,7 @@ bool planning_scene_monitor::PlanningSceneMonitor::getShapeTransformCache(
       tf_buffer_->canTransform(target_frame, it->first->getName(), target_time,
                                shape_transform_cache_lookup_wait_time_);
       Eigen::Affine3d ttr =
-          tf2::transformToEigen(tf_buffer_->lookupTransform(target_frame, it->first->getName(), target_time));
+          tf2::transformToEigen(tf_buffer_->lookupTransform(tf_prefix_ + target_frame, tf_prefix_ + it->first->getName(), target_time));
       for (std::size_t j = 0; j < it->second.size(); ++j)
         cache[it->second[j].first] = ttr * it->first->getCollisionOriginTransforms()[it->second[j].second];
     }
@@ -1009,7 +1017,7 @@ bool planning_scene_monitor::PlanningSceneMonitor::getShapeTransformCache(
       tf_buffer_->canTransform(target_frame, it->first->getAttachedLinkName(), target_time,
                                shape_transform_cache_lookup_wait_time_);
       Eigen::Affine3d transform = tf2::transformToEigen(
-          tf_buffer_->lookupTransform(target_frame, it->first->getAttachedLinkName(), target_time));
+          tf_buffer_->lookupTransform(tf_prefix_ + target_frame, tf_prefix_ + it->first->getAttachedLinkName(), target_time));
       for (std::size_t k = 0; k < it->second.size(); ++k)
         cache[it->second[k].first] = transform * it->first->getFixedTransforms()[it->second[k].second];
     }
@@ -1017,7 +1025,7 @@ bool planning_scene_monitor::PlanningSceneMonitor::getShapeTransformCache(
       tf_buffer_->canTransform(target_frame, scene_->getPlanningFrame(), target_time,
                                shape_transform_cache_lookup_wait_time_);
       Eigen::Affine3d transform =
-          tf2::transformToEigen(tf_buffer_->lookupTransform(target_frame, scene_->getPlanningFrame(), target_time));
+          tf2::transformToEigen(tf_buffer_->lookupTransform(tf_prefix_ + target_frame, tf_prefix_ + scene_->getPlanningFrame(), target_time));
       for (CollisionBodyShapeHandles::const_iterator it = collision_body_shape_handles_.begin();
            it != collision_body_shape_handles_.end(); ++it)
         for (std::size_t k = 0; k < it->second.size(); ++k)
@@ -1319,7 +1327,7 @@ void planning_scene_monitor::PlanningSceneMonitor::getUpdatedFrameTransforms(
     geometry_msgs::TransformStamped f;
     try
     {
-      f = tf_buffer_->lookupTransform(target, all_frame_names[i], ros::Time(0));
+      f = tf_buffer_->lookupTransform(tf_prefix_ + target, all_frame_names[i], ros::Time(0));
     }
     catch (tf2::TransformException& ex)
     {

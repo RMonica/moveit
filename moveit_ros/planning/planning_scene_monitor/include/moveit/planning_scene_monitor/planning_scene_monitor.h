@@ -253,6 +253,11 @@ public:
     return tf_buffer_;
   }
 
+  const std::string & getTFPrefix() const
+  {
+    return tf_prefix_;
+  }
+
   /** \brief By default, the maintained planning scene does not reason about diffs. When the flag passed in is true, the
      maintained
       scene starts counting diffs. Future updates to the planning scene will be stored as diffs and can be retrieved as
@@ -468,6 +473,7 @@ protected:
   ros::CallbackQueue queue_;
   std::shared_ptr<ros::AsyncSpinner> spinner_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::string tf_prefix_;
 
   std::string robot_description_;
 

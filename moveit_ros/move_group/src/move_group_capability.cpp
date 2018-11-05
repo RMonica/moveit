@@ -185,11 +185,12 @@ bool move_group::MoveGroupCapability::performTransform(geometry_msgs::PoseStampe
 
   try
   {
+    std::string tf_prefix = context_->planning_scene_monitor_->getTFPrefix();
     geometry_msgs::TransformStamped common_tf = context_->planning_scene_monitor_->getTFClient()->lookupTransform(
-        pose_msg.header.frame_id, target_frame, ros::Time(0.0));
+        pose_msg.header.frame_id, tf_prefix + target_frame, ros::Time(0.0));
     geometry_msgs::PoseStamped pose_msg_in(pose_msg);
     pose_msg_in.header.stamp = common_tf.header.stamp;
-    context_->planning_scene_monitor_->getTFClient()->transform(pose_msg_in, pose_msg, target_frame);
+    context_->planning_scene_monitor_->getTFClient()->transform(pose_msg_in, pose_msg, tf_prefix + target_frame);
   }
   catch (tf2::TransformException& ex)
   {

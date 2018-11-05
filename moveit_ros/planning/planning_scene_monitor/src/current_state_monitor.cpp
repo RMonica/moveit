@@ -60,7 +60,8 @@ planning_scene_monitor::CurrentStateMonitor::CurrentStateMonitor(const robot_mod
 {
   robot_state_.setToDefaultValues();
 
-  nh_.param<std::string>("tf_prefix", tf_prefix_, "");
+  ros::NodeHandle pnh("~");
+  pnh.param<std::string>("tf_prefix", tf_prefix_, "");
   if (!tf_prefix_.empty() && tf_prefix_.back() != '/')
     tf_prefix_ += "/";
 }
@@ -424,22 +425,22 @@ void planning_scene_monitor::CurrentStateMonitor::tfCallback()
     for (size_t i = 0; i < multi_dof_joints.size(); i++)
     {
       const moveit::core::JointModel* joint = multi_dof_joints[i];
-      const std::string& child_frame = tf_prefix_ + joint->getChildLinkModel()->getName();
-      const std::string& parent_frame = tf_prefix_ +
+      const std::string& child_frame = joint->getChildLinkModel()->getName();
+      const std::string& parent_frame =
           (joint->getParentLinkModel() ? joint->getParentLinkModel()->getName() : robot_model_->getModelFrame());
 
       ros::Time latest_common_time;
       geometry_msgs::TransformStamped transf;
       try
       {
-        transf = tf_buffer_->lookupTransform(parent_frame, child_frame, ros::Time(0.0));
+        transf = tf_buffer_->lookupTransform(tf_prefix_ + parent_frame, tf_prefix_ + child_frame, ros::Time(0.0));
         latest_common_time = transf.header.stamp;
       }
       catch (tf2::TransformException& ex)
       {
         ROS_WARN_STREAM_ONCE("Unable to update multi-DOF joint '"
                              << joint->getName() << "': Failure to lookup transform between '" << parent_frame.c_str()
-                             << "' and '" << child_frame.c_str() << "' with TF exception: " << ex.what());
+                             << "' and '" << child_frame.c_str() << "' (prefix: '" << tf_prefix_ << "') with TF exception: " << ex.what());
         continue;
       }
 
